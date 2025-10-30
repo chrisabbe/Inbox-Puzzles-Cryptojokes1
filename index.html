@@ -1,0 +1,96 @@
+<div style="font-family:monospace;max-width:600px;margin:auto;padding:1em;background:#fafafa;border-radius:12px;border:1px solid #ccc;">
+  <h3 style="text-align:center;margin-top:0;">🔐 Cryptogram Puzzle</h3>
+  <p style="text-align:center;font-style:italic;margin-bottom:1em;">
+    Each letter stands for another. Your progress is saved automatically!
+  </p>
+
+  <div id="cryptogram" style="display:flex;flex-direction:column;align-items:center;gap:10px;font-size:18px;line-height:1.4;margin-bottom:1em;"></div>
+
+  <div style="text-align:center;">
+    <button id="resetButton" style="padding:6px 12px;border:1px solid #bbb;border-radius:6px;background:#eee;cursor:pointer;font-family:inherit;font-size:15px;">
+      🔄 Clear My Answers
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const phrase = "FSW ROR DST CZQNTZNLF FOH QH QFQNR? MTZQACT ST FQC LADCDQHROHP OH SOC YOTIR.";
+  const container = document.getElementById("cryptogram");
+  const COOKIE_NAME = "cryptogram_scarecrow";
+
+  // --- simple cookie helpers ---
+  function setCookie(name,value,days){
+    let d = new Date();
+    d.setTime(d.getTime()+(days*24*60*60*1000));
+    document.cookie = name+"="+encodeURIComponent(value)+";expires="+d.toUTCString()+";path=/";
+  }
+  function getCookie(name){
+    const match = document.cookie.match(new RegExp("(^| )"+name+"=([^;]+)"));
+    return match? decodeURIComponent(match[2]):"";
+  }
+  function eraseCookie(name){ setCookie(name,"",-1); }
+
+  // --- load saved progress ---
+  let saved = {};
+  try{ saved = JSON.parse(getCookie(COOKIE_NAME)||"{}"); }catch(e){ saved = {}; }
+
+  // --- build the puzzle ---
+  phrase.split(' ').forEach((word,wIndex)=>{
+    const wordDiv=document.createElement('div');
+    wordDiv.style.display="inline-flex";
+    wordDiv.style.marginRight="12px";
+    wordDiv.style.flexWrap="nowrap";
+    word.split('').forEach((ch,cIndex)=>{
+      if(/[A-Z]/.test(ch)){
+        const cell=document.createElement('div');
+        cell.style.display="flex";
+        cell.style.flexDirection="column";
+        cell.style.alignItems="center";
+        cell.style.width="1.5em";
+
+        const top=document.createElement('div');
+        top.textContent=ch;
+        top.style.fontWeight="bold";
+        top.style.marginBottom="4px";
+
+        const box=document.createElement('input');
+        box.type="text";
+        box.maxLength=1;
+        box.style.width="1.5em";
+        box.style.textAlign="center";
+        box.style.textTransform="uppercase";
+        box.style.border="1px solid #bbb";
+        box.style.borderRadius="4px";
+        box.style.padding="2px";
+
+        const id=wIndex+"-"+cIndex;
+        box.value=saved[id]||"";
+        box.addEventListener('input',e=>{
+          e.target.value=e.target.value.toUpperCase();
+          saved[id]=e.target.value;
+          setCookie(COOKIE_NAME,JSON.stringify(saved),30);
+        });
+
+        cell.appendChild(top);
+        cell.appendChild(box);
+        wordDiv.appendChild(cell);
+      } else {
+        const punct=document.createElement('div');
+        punct.textContent=ch;
+        punct.style.marginLeft="4px";
+        punct.style.fontWeight="bold";
+        wordDiv.appendChild(punct);
+      }
+    });
+    container.appendChild(wordDiv);
+  });
+
+  // --- clear answers ---
+  document.getElementById("resetButton").addEventListener("click",()=>{
+    eraseCookie(COOKIE_NAME);
+    saved={};
+    container.querySelectorAll("input").forEach(i=>i.value="");
+  });
+})();
+</script>
